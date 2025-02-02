@@ -1,4 +1,5 @@
 import logging
+import argparse
 
 # Configure logging
 logging.basicConfig(level=logging.INFO,
@@ -24,7 +25,10 @@ def divide_numbers(a, b):
         logging.info("Execution completed.")
 
 
-# Example usage
-divide_numbers(10, 2)
-divide_numbers(10, 0)
-divide_numbers(10, 'a')
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Divide two numbers.")
+    parser.add_argument("a", type=float, help="The dividend")
+    parser.add_argument("b", type=float, help="The divisor")
+    args = parser.parse_args()
+
+    divide_numbers(args.a, args.b)
