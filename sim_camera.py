@@ -1,6 +1,7 @@
 import math
-from panda3d.core import Point3, LineSegs
+from panda3d.core import Point3, LineSegs, TextNode, GeomNode, CardMaker
 from direct.showbase.ShowBase import ShowBase
+from direct.gui.OnscreenText import OnscreenText
 from FoV import calculate_fov_dimensions
 
 
@@ -31,6 +32,9 @@ class CameraProjectionApp(ShowBase):
         # Create a visual representation of the FOV
         self.draw_fov(fov_width_m, fov_height_m)
 
+        # Create a box to represent the camera
+        self.create_camera_representation()
+
     def draw_fov(self, width, height):
         # Create a LineSegs object to draw lines
         lines = LineSegs()
@@ -60,9 +64,44 @@ class CameraProjectionApp(ShowBase):
         lines.move_to(camera_position)
         lines.draw_to(bottom_right)
 
+        # Draw X and Y axes
+        lines.set_color(0, 1, 0, 1)  # Green color for axes
+        lines.move_to(Point3(-width / 2, 1, 0))
+        lines.draw_to(Point3(width / 2, 1, 0))  # X axis
+        lines.move_to(Point3(0, 1, -height / 2))
+        lines.draw_to(Point3(0, 1, height / 2))  # Y axis
+
+        # Create tick marks and labels for X axis
+        for i in range(int(-width / 2), int(width / 2) + 1):
+            lines.move_to(Point3(i, 1, -0.1))
+            lines.draw_to(Point3(i, 1, 0.1))
+            self.create_text(str(i), Point3(i, 1, -0.2))
+
+        # Create tick marks and labels for Y axis
+        for i in range(int(-height / 2), int(height / 2) + 1):
+            lines.move_to(Point3(-0.1, 1, i))
+            lines.draw_to(Point3(0.1, 1, i))
+            self.create_text(str(i), Point3(-0.2, 1, i))
+
         # Create a NodePath from the LineSegs object and attach it to the render
         fov_node = lines.create()
         self.render.attach_new_node(fov_node)
+
+    def create_text(self, text, position):
+        text_node = TextNode('node')
+        text_node.set_text(text)
+        text_node_path = self.render.attach_new_node(text_node)
+        text_node_path.set_pos(position)
+        text_node_path.set_scale(0.2)
+
+    def create_camera_representation(self):
+        # Create a simple box to represent the camera
+        cm = CardMaker('camera_representation')
+        cm.set_frame(-0.1, 0.1, -0.1, 0.1)
+        camera_representation = self.render.attach_new_node(cm.generate())
+        camera_representation.set_pos(0, 0, 0)
+        camera_representation.set_color(
+            0, 0, 1, 1)  # Blue color for the camera
 
     def spin_camera_task(self, task):
         angle_degrees = task.time * 6.0
