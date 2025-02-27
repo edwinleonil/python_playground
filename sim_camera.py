@@ -1,8 +1,8 @@
 import math
-from panda3d.core import Point3, LineSegs, TextNode, GeomNode, CardMaker
+from panda3d.core import Point3, LineSegs, TextNode, CardMaker, MouseWatcher
 from direct.showbase.ShowBase import ShowBase
-from direct.gui.OnscreenText import OnscreenText
 from FoV import calculate_fov_dimensions
+from direct.task import Task
 
 
 class CameraProjectionApp(ShowBase):
@@ -13,7 +13,6 @@ class CameraProjectionApp(ShowBase):
         self.disable_mouse()
         self.camera.set_pos(0, -10, 0)
         self.camera.look_at(0, 0, 0)
-        self.task_mgr.add(self.spin_camera_task, "SpinCameraTask")
 
         # Camera parameters
         focal_length = 35  # in millimeters
@@ -34,6 +33,17 @@ class CameraProjectionApp(ShowBase):
 
         # Create a box to represent the camera
         self.create_camera_representation()
+
+        # Add task to update rotation based on mouse movement
+        self.taskMgr.add(self.update_rotation, "update_rotation")
+
+        # Store initial mouse position
+        self.mouse_x = 0
+        self.mouse_y = 0
+
+        # Add event listeners for mouse wheel
+        self.accept("wheel_up", self.zoom_in)
+        self.accept("wheel_down", self.zoom_out)
 
     def draw_fov(self, width, height):
         # Create a LineSegs object to draw lines
@@ -103,13 +113,33 @@ class CameraProjectionApp(ShowBase):
         camera_representation.set_color(
             0, 0, 1, 1)  # Blue color for the camera
 
-    def spin_camera_task(self, task):
-        angle_degrees = task.time * 6.0
-        angle_radians = angle_degrees * (math.pi / 180.0)
-        self.camera.set_pos(10 * math.sin(angle_radians), -
-                            10 * math.cos(angle_radians), 3)
-        self.camera.look_at(0, 0, 0)
-        return task.cont
+    def update_rotation(self, task):
+        if self.mouseWatcherNode.has_mouse():
+            mouse_pos = self.mouseWatcherNode.get_mouse()
+            new_mouse_x = mouse_pos.get_x()
+            new_mouse_y = mouse_pos.get_y()
+
+            # Check if the right mouse button is pressed
+            if base.mouseWatcherNode.is_button_down('mouse3'):
+                # Calculate the change in mouse position
+                delta_x = new_mouse_x - self.mouse_x
+                delta_y = new_mouse_y - self.mouse_y
+
+                # Update the camera rotation based on mouse movement
+                self.camera.set_h(self.camera.get_h() - delta_x * 100)
+                self.camera.set_p(self.camera.get_p() - delta_y * 100)
+
+            # Store the new mouse position
+            self.mouse_x = new_mouse_x
+            self.mouse_y = new_mouse_y
+
+        return Task.cont
+
+    def zoom_in(self):
+        self.camera.set_y(self.camera, 1)
+
+    def zoom_out(self):
+        self.camera.set_y(self.camera, -1)
 
 
 if __name__ == "__main__":
